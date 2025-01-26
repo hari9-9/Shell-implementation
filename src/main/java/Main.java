@@ -13,8 +13,13 @@ public class Main {
             if(Objects.equals(input,"exit 0"))
             {
                 return;
+            } else if (input.startsWith("echo")) {
+                String toPrint = input.substring(5);
+                System.out.println(toPrint);
             }
-            System.out.println(input + ": command not found");
+            else {
+                System.out.println(input + ": command not found");
+            }
         }
 
     }
