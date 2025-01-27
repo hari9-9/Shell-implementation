@@ -1,5 +1,8 @@
 package shell.command;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -23,7 +26,42 @@ public class CommandExecutor {
         if (command != null) {
             command.execute(commandParts);
         } else {
-            System.out.println(commandParts[0] + ": command not found");
+            executeExternalCommand(commandParts);
         }
+    }
+
+    private void executeExternalCommand(String[] commandParts) {
+        String command = commandParts[0];
+
+        // Find the full path of the executable in the PATH environment variable
+        String executablePath = findExecutableInPath(command);
+
+        if (executablePath != null) {
+            try {
+                ProcessBuilder processBuilder = new ProcessBuilder(commandParts);
+                processBuilder.inheritIO(); // Pass IO to console for output display
+                Process process = processBuilder.start();
+                process.waitFor();
+            } catch (IOException | InterruptedException e) {
+                System.out.println(command + ": error executing command");
+                Thread.currentThread().interrupt();
+            }
+        } else {
+            System.out.println(command + ": command not found");
+        }
+    }
+    private String findExecutableInPath(String command) {
+        String pathEnv = System.getenv("PATH");
+        if (pathEnv == null || pathEnv.isEmpty()) {
+            return null;
+        }
+
+        for (String dir : pathEnv.split(":")) {
+            Path fullPath = Path.of(dir, command);
+            if (Files.isRegularFile(fullPath) && Files.isExecutable(fullPath)) {
+                return fullPath.toString();
+            }
+        }
+        return null;
     }
 }
