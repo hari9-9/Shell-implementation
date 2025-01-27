@@ -1,6 +1,8 @@
 package shell.command;
 
 import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class CdCommand implements ICommand {
     @Override
@@ -10,17 +12,23 @@ public class CdCommand implements ICommand {
             return;
         }
 
-        String path = args[1];
-        File directory = new File(path);
+        String inputPath = args[1];
+        Path newPath;
 
-        if (directory.isAbsolute() && directory.isDirectory()) {
-            if (directory.exists()) {
-                System.setProperty("user.dir", directory.getAbsolutePath());
-            } else {
-                System.out.println("cd: " + path + ": No such file or directory");
-            }
+        if (inputPath.startsWith("/")) {
+            // Handle absolute path
+            newPath = Paths.get(inputPath);
         } else {
-            System.out.println("cd: " + path + ": No such file or directory");
+            // Handle relative path
+            newPath = Paths.get(System.getProperty("user.dir")).resolve(inputPath).normalize();
+        }
+
+        File directory = newPath.toFile();
+
+        if (directory.exists() && directory.isDirectory()) {
+            System.setProperty("user.dir", directory.getAbsolutePath());
+        } else {
+            System.out.println("cd: " + inputPath + ": No such file or directory");
         }
     }
 }
