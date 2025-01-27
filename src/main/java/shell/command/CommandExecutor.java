@@ -15,6 +15,7 @@ public class CommandExecutor {
         commandMap.put("exit", new ExitCommand());
         commandMap.put("type", new TypeCommand());
         commandMap.put("pwd", new PwdCommand());
+        commandMap.put("cd", new CdCommand());
     }
 
     public void execute(String[] commandParts) {
