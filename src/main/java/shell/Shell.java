@@ -19,7 +19,6 @@ public class Shell {
             System.out.print("$ ");
             String input = scanner.nextLine().trim();
             if (input.equalsIgnoreCase("exit 0")) {
-                System.out.println("Exiting shell...");
                 break;
             }
             String[] commandParts = CommandParser.parse(input);
