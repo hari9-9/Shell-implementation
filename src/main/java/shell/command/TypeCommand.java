@@ -11,7 +11,7 @@ public class TypeCommand implements ICommand {
         BUILTIN_COMMANDS.add("echo");
         BUILTIN_COMMANDS.add("exit");
         BUILTIN_COMMANDS.add("type");
-        BUILTIN_COMMANDS.add("PWD");
+        BUILTIN_COMMANDS.add("pwd");
     }
 
     @Override
