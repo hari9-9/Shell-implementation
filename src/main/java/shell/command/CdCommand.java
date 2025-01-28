@@ -14,7 +14,9 @@ public class CdCommand implements ICommand {
 
         String inputPath = args[1];
         Path newPath;
-
+        if (inputPath.startsWith("~")){
+            inputPath = inputPath.replace("~" , System.getenv("HOME"));
+        }
         if (inputPath.startsWith("/")) {
             // Handle absolute path
             newPath = Paths.get(inputPath);
