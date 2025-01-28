@@ -10,6 +10,7 @@ import java.util.regex.Pattern;
  * into an array of arguments, respecting the rules for quoted and unquoted tokens.
  */
 public class CommandParser {
+
     /**
      * Parses the given input string into an array of command arguments.
      *
@@ -22,7 +23,6 @@ public class CommandParser {
         //    - Captures everything inside single quotes as a group (Group 1).
         // 2. Unquoted text: \\S+
         //    - Matches sequences of non-whitespace characters.
-        // 3. Allow seamless concatenation of quoted and unquoted parts.
         Pattern pattern = Pattern.compile("'([^']*)'|\\S+");
 
         // Create a matcher to apply the pattern on the input string.
@@ -44,11 +44,16 @@ public class CommandParser {
                 currentToken.append(matcher.group()); // Append unquoted content to the current token
             }
 
-            // If the next match is not adjacent, finalize the current token.
-            if (matcher.hitEnd() || input.charAt(matcher.end()) == ' ') {
+            // Finalize the token if the next match is not adjacent or if this is the end of the input.
+            if (matcher.hitEnd() || (matcher.end() < input.length() && input.charAt(matcher.end()) == ' ')) {
                 tokens.add(currentToken.toString()); // Add the token to the list
                 currentToken.setLength(0); // Reset the builder for the next token
             }
+        }
+
+        // If there's any remaining content in currentToken, add it as the last token.
+        if (currentToken.length() > 0) {
+            tokens.add(currentToken.toString());
         }
 
         // Convert the List of tokens into a String array and return it.
