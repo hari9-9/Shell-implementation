@@ -38,13 +38,23 @@ public class CommandParser {
                 // Double quotes: Handle escape sequences inside the quoted text.
                 currentToken.append(unescapeDoubleQuotes(matcher.group(2)));
             } else {
-                // Unquoted text.
+                // Unquoted text: Finalize the current token if it exists.
                 if (currentToken.length() > 0) {
-                    // Add the completed token before processing unquoted text.
                     tokens.add(currentToken.toString());
-                    currentToken.setLength(0);
+                    currentToken.setLength(0); // Reset for the next token
                 }
                 tokens.add(matcher.group());
+            }
+
+            // If there's no space between tokens, continue appending.
+            if (matcher.hitEnd() || (matcher.end() < input.length() && input.charAt(matcher.end()) != ' ')) {
+                continue;
+            }
+
+            // Finalize the token if a space follows.
+            if (currentToken.length() > 0) {
+                tokens.add(currentToken.toString());
+                currentToken.setLength(0); // Reset for the next token
             }
         }
 
