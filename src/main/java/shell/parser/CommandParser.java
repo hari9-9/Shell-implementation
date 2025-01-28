@@ -8,14 +8,8 @@ import java.util.regex.Pattern;
 /**
  * The CommandParser class provides a utility method to parse a command-line input string
  * into an array of arguments, respecting the rules for quoted and unquoted tokens.
- *
- * This parser supports:
- * - Single-quoted strings: Treats the content inside single quotes as a single token,
- *   preserving spaces and special characters literally.
- * - Unquoted tokens: Splits tokens by whitespace.
  */
 public class CommandParser {
-
     /**
      * Parses the given input string into an array of command arguments.
      *
@@ -28,6 +22,7 @@ public class CommandParser {
         //    - Captures everything inside single quotes as a group (Group 1).
         // 2. Unquoted text: \\S+
         //    - Matches sequences of non-whitespace characters.
+        // 3. Allow seamless concatenation of quoted and unquoted parts.
         Pattern pattern = Pattern.compile("'([^']*)'|\\S+");
 
         // Create a matcher to apply the pattern on the input string.
@@ -36,20 +31,27 @@ public class CommandParser {
         // List to store the parsed tokens (arguments) from the input string.
         List<String> tokens = new ArrayList<>();
 
+        // Temporary variable to handle concatenation of adjacent tokens.
+        StringBuilder currentToken = new StringBuilder();
+
         // Loop through all matches in the input string.
         while (matcher.find()) {
-            // If Group 1 (text inside single quotes) is not null, add it as a token.
             if (matcher.group(1) != null) {
-                tokens.add(matcher.group(1)); // Add the content inside single quotes.
+                // Group 1: Text inside single quotes
+                currentToken.append(matcher.group(1)); // Append quoted content to the current token
             } else {
-                // If Group 1 is null, add the full match (unquoted text) as a token.
-                tokens.add(matcher.group()); // Add the unquoted token.
+                // Group 0: Unquoted text
+                currentToken.append(matcher.group()); // Append unquoted content to the current token
+            }
+
+            // If the next match is not adjacent, finalize the current token.
+            if (matcher.hitEnd() || input.charAt(matcher.end()) == ' ') {
+                tokens.add(currentToken.toString()); // Add the token to the list
+                currentToken.setLength(0); // Reset the builder for the next token
             }
         }
 
         // Convert the List of tokens into a String array and return it.
-        // Passing `new String[0]` ensures type safety and allows the method to dynamically
-        // create an appropriately sized array to hold all tokens.
         return tokens.toArray(new String[0]);
     }
 }
