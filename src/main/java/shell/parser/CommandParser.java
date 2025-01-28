@@ -28,18 +28,29 @@ public class CommandParser {
 
         Matcher matcher = pattern.matcher(input);
         List<String> tokens = new ArrayList<>();
+        StringBuilder currentToken = new StringBuilder();
 
         while (matcher.find()) {
             if (matcher.group(1) != null) {
                 // Single quotes: Take the content as-is.
-                tokens.add(matcher.group(1));
+                currentToken.append(matcher.group(1));
             } else if (matcher.group(2) != null) {
                 // Double quotes: Handle escape sequences inside the quoted text.
-                tokens.add(unescapeDoubleQuotes(matcher.group(2)));
+                currentToken.append(unescapeDoubleQuotes(matcher.group(2)));
             } else {
                 // Unquoted text.
+                if (currentToken.length() > 0) {
+                    // Add the completed token before processing unquoted text.
+                    tokens.add(currentToken.toString());
+                    currentToken.setLength(0);
+                }
                 tokens.add(matcher.group());
             }
+        }
+
+        // Add the final token if it exists.
+        if (currentToken.length() > 0) {
+            tokens.add(currentToken.toString());
         }
 
         return tokens.toArray(new String[0]);
