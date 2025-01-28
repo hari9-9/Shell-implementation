@@ -22,9 +22,9 @@ public class CommandParser {
         // 1. Text enclosed in single quotes: '([^']*)'
         // 2. Text enclosed in double quotes: "((?:[^\"\\\\]|\\\\.)*)"
         //    - Captures everything inside double quotes, handling escaped characters.
-        // 3. Unquoted text with backslashes: (?:[^\\s\\\\]|\\.)+
-        //    - Matches sequences of non-whitespace characters, treating backslashes as escape characters.
-        Pattern pattern = Pattern.compile("'([^']*)'|\"((?:[^\"\\\\]|\\\\.)*)\"|(?:[^\\s\\\\]|\\\\.)+");
+        // 3. Unquoted text: \\S+
+        //    - Matches sequences of non-whitespace characters.
+        Pattern pattern = Pattern.compile("'([^']*)'|\"((?:[^\"\\\\]|\\\\.)*)\"|\\S+");
 
         Matcher matcher = pattern.matcher(input);
         List<String> tokens = new ArrayList<>();
@@ -33,14 +33,34 @@ public class CommandParser {
         while (matcher.find()) {
             if (matcher.group(1) != null) {
                 // Single quotes: Take the content as-is.
-                tokens.add(matcher.group(1));
+                currentToken.append(matcher.group(1));
             } else if (matcher.group(2) != null) {
                 // Double quotes: Handle escape sequences inside the quoted text.
-                tokens.add(unescapeDoubleQuotes(matcher.group(2)));
+                currentToken.append(unescapeDoubleQuotes(matcher.group(2)));
             } else {
-                // Unquoted text: Handle escape sequences.
-                tokens.add(unescapeBackslashes(matcher.group()));
+                // Unquoted text: Finalize the current token if it exists.
+                if (currentToken.length() > 0) {
+                    tokens.add(currentToken.toString());
+                    currentToken.setLength(0); // Reset for the next token
+                }
+                tokens.add(matcher.group());
             }
+
+            // If there's no space between tokens, continue appending.
+            if (matcher.hitEnd() || (matcher.end() < input.length() && input.charAt(matcher.end()) != ' ')) {
+                continue;
+            }
+
+            // Finalize the token if a space follows.
+            if (currentToken.length() > 0) {
+                tokens.add(currentToken.toString());
+                currentToken.setLength(0); // Reset for the next token
+            }
+        }
+
+        // Add the final token if it exists.
+        if (currentToken.length() > 0) {
+            tokens.add(currentToken.toString());
         }
 
         return tokens.toArray(new String[0]);
@@ -57,29 +77,5 @@ public class CommandParser {
                 .replace("\\\"", "\"")  // Replace \" with "
                 .replace("\\$", "$")    // Replace \$ with $
                 .replace("\\n", "\n");  // Replace \n with a newline character
-    }
-
-    /**
-     * Unescapes backslashes in unquoted text.
-     *
-     * @param input The raw content with backslashes.
-     * @return The unescaped content.
-     */
-    private static String unescapeBackslashes(String input) {
-        StringBuilder result = new StringBuilder();
-        boolean isEscaped = false;
-
-        for (char c : input.toCharArray()) {
-            if (isEscaped) {
-                result.append(c); // Add the escaped character literally
-                isEscaped = false;
-            } else if (c == '\\') {
-                isEscaped = true; // Set the escape flag for the next character
-            } else {
-                result.append(c); // Add the current character as-is
-            }
-        }
-
-        return result.toString();
     }
 }
