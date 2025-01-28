@@ -20,43 +20,41 @@ public class CommandParser {
     public static String[] parse(String input) {
         // Regular expression pattern to match:
         // 1. Text enclosed in single quotes: '([^']*)'
-        //    - Captures everything inside single quotes as a group (Group 1).
-        // 2. Unquoted text: \\S+
+        // 2. Text enclosed in double quotes: "((?:[^\"\\\\]|\\\\.)*)"
+        //    - Captures everything inside double quotes, handling escaped characters.
+        // 3. Unquoted text: \\S+
         //    - Matches sequences of non-whitespace characters.
-        Pattern pattern = Pattern.compile("'([^']*)'|\\S+");
+        Pattern pattern = Pattern.compile("'([^']*)'|\"((?:[^\"\\\\]|\\\\.)*)\"|\\S+");
 
-        // Create a matcher to apply the pattern on the input string.
         Matcher matcher = pattern.matcher(input);
-
-        // List to store the parsed tokens (arguments) from the input string.
         List<String> tokens = new ArrayList<>();
 
-        // Temporary variable to handle concatenation of adjacent tokens.
-        StringBuilder currentToken = new StringBuilder();
-
-        // Loop through all matches in the input string.
         while (matcher.find()) {
             if (matcher.group(1) != null) {
-                // Group 1: Text inside single quotes
-                currentToken.append(matcher.group(1)); // Append quoted content to the current token
+                // Single quotes: Take the content as-is.
+                tokens.add(matcher.group(1));
+            } else if (matcher.group(2) != null) {
+                // Double quotes: Handle escape sequences inside the quoted text.
+                tokens.add(unescapeDoubleQuotes(matcher.group(2)));
             } else {
-                // Group 0: Unquoted text
-                currentToken.append(matcher.group()); // Append unquoted content to the current token
-            }
-
-            // Finalize the token if the next match is not adjacent or if this is the end of the input.
-            if (matcher.hitEnd() || (matcher.end() < input.length() && input.charAt(matcher.end()) == ' ')) {
-                tokens.add(currentToken.toString()); // Add the token to the list
-                currentToken.setLength(0); // Reset the builder for the next token
+                // Unquoted text.
+                tokens.add(matcher.group());
             }
         }
 
-        // If there's any remaining content in currentToken, add it as the last token.
-        if (currentToken.length() > 0) {
-            tokens.add(currentToken.toString());
-        }
-
-        // Convert the List of tokens into a String array and return it.
         return tokens.toArray(new String[0]);
+    }
+
+    /**
+     * Unescapes special characters in double-quoted strings.
+     *
+     * @param input The raw content inside double quotes.
+     * @return The unescaped content.
+     */
+    private static String unescapeDoubleQuotes(String input) {
+        return input.replace("\\\\", "\\")  // Replace \\ with \
+                .replace("\\\"", "\"")  // Replace \" with "
+                .replace("\\$", "$")    // Replace \$ with $
+                .replace("\\n", "\n");  // Replace \n with a newline character
     }
 }
